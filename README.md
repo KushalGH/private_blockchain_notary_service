@@ -24,7 +24,7 @@ Criteria | Web API post endpoint validates request with JSON response.
 **Method** | POST
 **Endpoint** | ```http://localhost:8000/requestValidation```
 **Parameters** | ```address: Electrum wallet address``` 
-**Request** | ```img```
+**Request** | ```![picture](imgages/002_electrum_test_wallet.png)```
 **Response** | ```{ "address": "n2icjrQvgRoEzqMZwLV1teMtz3SQz6L7yx",     "message": "n2icjrQvgRoEzqMZwLV1teMtz3SQz6L7yx:1543166640955:starRegistry",     "requestTimeStamp": 1543166640955, "validationWindow": 300}```
 
 #### ii) Web API post endpoint validates message signature with JSON response. 
@@ -89,10 +89,15 @@ Criteria | Get star block by star block height with JSON response.
 
 
 > **HAPPY CODING!!!** 
+
 > **If you liked my work, please press star and connect with me at:** 
+
 > **GITHub: https://github.com/KushalGH** 
+
 > **LinkedIn: https://linkedin.com/in/sethkushal/**
+
 > **Twitter: https://twitter.com/KushalSeth**
+
 
 
 
