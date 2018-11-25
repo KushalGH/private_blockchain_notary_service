@@ -1,107 +1,192 @@
-/* ======================== HapiJS init fle ==========================|
-|  Learn more: level: https://github.com/Level/level                  |
-|  ==================================================================*/
 
-const { Blockchain } = require('./simpleChain');
-const { Block } = require('./block');
-const blockchain = new Blockchain();
+const myPrivateBlockchain = require('./simpleChain');
+const blockchain = new myPrivateBlockchain.Blockchain();
+const Block = require('./Block');
+const StarValidation = require('./levelSandbox')
+const fiveMins = 5*60
+const maxStoryLength = 500
+var requests = []
+var startTime
+var validationWindow = fiveMins
 
 'use strict';
-
 const Hapi=require('hapi');
 
-
-/* ============================ create a server ===============================|
-|  - Create a server with a host and port                                      | 
-|  ===========================================================================*/
+// Create a server with a host and port
 const server=Hapi.server({
     host:'localhost',
     port:8000
 });
 
-
-
-/* ========================== create default Path =============================|
-|  - Default path of http://localhost:8000/                                    | 
-|  ===========================================================================*/
-server.route({
-    method:'GET',
+// Add the route
+server.route([
+    { method: 'GET',
     path:'/',
-    handler:function(request,h) {
-
-        var obj = {
-            result: 'WELCOME!! RESTful Web API [HapiJS] with Node.js Framework Project'
-        };
-
-        return obj;
-    }
-});
-
-
-/* =========================== GET Block Endpoint =============================|
-|  - The web API contains a GET endpoint that responds to a request using a    | 
-|    URL path with a block height parameter or properly handles an error       |
-|    if the height parameter is out of bounds.                                 |
-|  ===========================================================================*/
-server.route({
-    method:'GET',
-    path:'/block/{height?}',
-    handler:function(request,h) {        
-        return new Promise(function(resolve, reject) {
-            blockchain.getBlock(request.params.height)
-            .then(function(data) {
-                console.log("IT's a Success");
-                return resolve(JSON.parse(data));
-            })
-            .catch((error) => {
-                console.log(error);
-                return resolve(error);
-            });            
-        });
-    }
-});
-
-
-/* =========================== POST Block Endpoint ============================|
-|  - Post a new block with data payload option to add data to the block body.  | 
-|    The block body should support a string of text.The response for the       |
-|    endpoint should provide block object in JSON format.                      |
-|  ===========================================================================*/
-server.route({
-    method: 'POST',
+    handler: function(request,h){
+        return "Welcome to the \"RESTful Web API with Hapi.js Framework\" project.";
+    }},
+    { method:'GET',
+    path:'/block/{blockNumber}',
+    handler:async function(request,h) {
+        let blockHeight = request.params.blockNumber;
+        if (blockHeight<0) {
+            return "ERROR!\n" + "Invalid Block Height!";
+        } else {
+            return blockchain.getBlockByHeight(blockHeight);
+        }
+    }},
+    { method: 'POST',
+    path: '/requestValidation',
+    handler:async function(request,h) {
+        console.log("payload add ", request.payload);
+        if (request.payload === null){
+            return "ERROR!\n" + "Please add your wallet address to the POST request!";
+        } else {
+            const starValidation = new StarValidation(request)
+            const address = request.payload.address
+            if (validationWindow <= 1) {
+                requests.pop()
+            }
+            if (requests.length>0) {
+                const endTime = new Date()
+                validationWindow = fiveMins - Math.round((endTime - startTime)/1000)
+            } else {
+                startTime = new Date()
+                validationWindow = fiveMins
+                requests.push(address)
+            }
+            try{
+                console.log("getInQueueRequests ", request.payload.address);
+                data = await starValidation.getInQueueRequests(address, validationWindow)
+                console.log("data getInQueueRequests ", data);
+            } catch(error) {
+                console.log("saveRequestValidation ", request.payload.address);
+                data = await starValidation.saveRequestValidation(address, validationWindow)
+                console.log("data saveRequestValidation ", data);
+            }
+            const response = h.response(data)
+            response.code = (data.code)
+            response.header('Content-Type', 'application/json; charset=utf-8')
+            return response
+        }
+    }},
+    { method: 'POST',
+    path: '/message-signature/validate',
+    handler:async function(request,h){
+        if (request.payload === null){
+            return "ERROR!\n" + "Please add your wallet address and message signature to the POST request!";
+        } else {
+            const starValidation = new StarValidation(request)
+            try{
+                const {address, signature} = request.payload
+                const replyMsg = await starValidation.validateMsgSignature(address, signature)
+                if (replyMsg.registerStar) {
+                    const response = h.response(replyMsg)
+                    response.code = (replyMsg.code)
+                    response.header('Content-Type', 'application/json; charset=utf-8')
+                    return response
+                } else {
+                    return h.response(replyMsg).code(401)
+                }
+            } catch(error){
+                h.response({
+                    status: 404, 
+                    message: error.message
+                }).code(404)
+            }
+        }
+    }},
+    { method: 'POST',
     path: '/block',
-    handler: function (request, h) {
-        var payload = typeof payload == "string" ?  decodeURIComponent(request.payload) : request.payload;
-        var payload_obj = typeof payload == "string" ? JSON.parse(payload) : payload;
-        console.log("Payload is:", typeof payload_obj);
+    handler:async function(request,h){
+        if (request.payload === null){
+            return "ERROR!\n" + "Please add your wallet address and star information to the POST request!";
+        } else {
+            const starValidation = new StarValidation(request.payload)
+            console.log("log starValidation: ", starValidation);
+            const body = {address, star} = request.payload
+            const story = star.story
+            const dec = star.dec
+            const ra = star.ra
 
-        if(payload_obj && typeof(payload_obj.body) !== "undefined" 
-            && payload_obj.body && payload_obj.body.trim().length > 0)
-        {
-            console.log(typeof(payload_obj.body));
-            return new Promise(function(resolve, reject) {
-                //var payload_obj = JSON.parse(payload.body);
-                console.log(payload_obj.body);
-                blockchain.addBlock(new Block(payload_obj.body.trim()))
-                .then(function(data) {
-                    console.log("IT's a Success");
-                    return resolve(JSON.parse(data));
-                })
-                .catch((error) => {
-                    console.log(error);
-                    return resolve(JSON.parse(error));
-                });            
-            });
+            console.log("log Buffer.from(story): ", Buffer.from(story));
+            if (new Buffer.from(story).length > maxStoryLength) {
+                console.log("Your story is too long!")
+                throw new Error("Your story is too long!")
+            }
+
+            if (typeof dec !== 'string' || typeof ra !== 'string' || typeof story !== 'string' || 
+                !dec.length || !ra.length || !story.length) {
+                    console.log("Please enter correct information for 'dec', 'ra' and 'story' properties!")
+                    throw new Error("Please enter correct information for 'dec', 'ra' and 'story' properties!")
+            }   
+
+            try{
+                console.log("log checking validity");
+                const isValid = await starValidation.addressIsValid();
+                console.log("log isValid", isValid);
+                if (!isValid) {
+                    throw new Error("The signature isn't valid!")
+                }
+            } catch(error){
+                h.response({
+                    status: 401, 
+                    message: error.message
+                }).code(401)
+                return
+            }
+            body.star = {
+                dec: star.dec,
+                ra: star.ra,
+                story: new Buffer.from(story).toString('hex'),
+                mag: star.mag,
+                con: star.con
+            }
+            console.log("adding block: ", body);
+            await blockchain.addBlock(new Block(body))
+            const blockHeight = await blockchain.getBlockHeight()
+            const theNewBlock = await blockchain.getBlock(blockHeight)
+            const response = h.response(theNewBlock).code(201)
+            await starValidation.deleteAddress(address)
+            response.header('Content-Type', 'application/json; charset=utf-8');
+            return response;
         }
-        else {
-            var err = { 
-                error: "Please add proper value of body as key in method payload"
-            }; 
-            console.log(err);
-            return(err);
-        }
-    }
-});
+    }},
+    { method: 'GET',
+    path: '/stars/address:{address}',
+    handler:async function(request,h){
+        console.log("log ", request);
+        try{
+            const blockAddress = encodeURIComponent(request.params.address);
+             console.log("blockAddress ", blockAddress);
+            const block = await blockchain.getBlocksByAddress(blockAddress)
+            const response = h.response(block)
+            response.header('Content-Type', 'application/json; charset=utf-8');
+            return response;
+        } catch(error){
+            h.response({
+            status: 404, 
+            message: "Block Not Found"
+            }).code(404) 
+        }  
+    }},
+    { method: 'GET',
+    path: '/stars/hash:{hash}',
+    handler:async function(request,h){
+        try{
+            const hashString = encodeURIComponent(request.params.hash);
+            const block = await blockchain.getBlockByHash(hashString)
+            const response = h.response(block)
+            response.header('Content-Type', 'application/json; charset=utf-8');
+            return response;
+        } catch(error){
+            h.response({
+            status: 404, 
+            message: "Block Not Found"
+            }).code(404) 
+        }  
+    }}
+]);
 
 // Start the server
 async function start() {

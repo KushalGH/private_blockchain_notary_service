@@ -1,134 +1,119 @@
-/* ================== Persist data with LevelDB ======================|
-|  Learn more: level: https://github.com/Level/level                  |
-|  ==================================================================*/
-
 const level = require('level');
-const chainDB = './chaindata';
-const db = level(chainDB);
+const starDB = './stardata';
+const db = level(starDB);
+const bitcoinMessage = require('bitcoinjs-message');
+const verificationTimeWall = 5*60*1000; //Five Minutes
 
+class Validation{
+	constructor (req){
+		this.req = req;
+	}
 
+	addressIsValid(){
+		return new Promise((resolve, reject) => {
+			console.log("log addressIsValid ", this.req);
+			db.get(this.req.address, function(err, value) {
+				console.log("log err ", err, " value: ", value);
+      			if (err) {
+        			var obj = {
+          				error: "Error. Block doesnot exist."
+       				}
+       				return resolve(false); 
+      			}      
+      			else {
+        			console.log("getLevelDBData success: ", JSON.stringify(value));
+        			//return resolve(JSON.stringify(value))
+        			return resolve(true) 
+      			};				
+			})
+		});
 
-/* ============================ addLevelDBData ================================|
-|  - Add data to levelDB with key/value pair                                   | 
-|  ===========================================================================*/
-function addLevelDBData(key,value) {  
-  return new Promise(function(resolve, reject) {
-    db.put(key, value, function(err) {
-      if (err) {
-        err = "error occured while creating the addLevelDBData", err;        
-        return reject(err)
-      } else {
-        console.log("addLevelDBData success:", JSON.stringify(value));
-         return resolve(value);
-      }
-      });
-  })
+	}
+
+	deleteAddress(address){
+		db.del(address)
+	}
+
+	async validateMsgSignature(address, signature){
+		return new Promise((resolve, reject) => {
+			db.get(address, (error, value) => {
+				if (value === undefined) {
+					return reject(new Error("Not Found"))
+				} else if (error) {
+					return reject(error)
+				}
+				value = JSON.parse(value)
+				if (value.messageSignature === 'valid') {
+					return resolve({
+						registerStar: true,
+						status: value
+					})
+				} else {
+					const expired = value.requestTimeStamp < (Date.now() - verificationTimeWall)
+					let isValid = false
+					if (expired) {
+						value.validationWindow = 0
+						value.messageSignature = 'Validation window is expired!'
+					} else {
+						value.validationWindow = Math.round((value.requestTimeStamp - (Date.now() - verificationTimeWall))/1000)
+						try{
+							isValid = bitcoinMessage.verify(value.message, address, signature)
+						} catch(error){
+							isValid = false
+						}
+						if (isValid) {
+							value.messageSignature = 'valid'
+						} else {
+							value.messageSignature = 'invalid'
+						}
+					}
+					db.put(address, JSON.stringify(value))
+					return resolve({
+						registerStar: !expired && isValid,
+						status: value
+					})
+				}
+			})
+		})
+	}
+
+	saveRequestValidation(address, validationWindowTime){
+		const timeStamp = Date.now()
+		const msg = `${address}:${timeStamp}:starRegistry`
+		const data = {
+			address: address,
+			message: msg,
+			requestTimeStamp: timeStamp,
+			validationWindow: validationWindowTime
+		}
+		db.put(data.address, JSON.stringify(data))
+		return data
+	}
+
+	async getInQueueRequests(address, validationWindowTime){
+		const expired = value.requestTimeStamp < (Date.now() - verificationTimeWall)
+		return new Promise((resolve, reject) => {
+			db.get(address, (error, value) => {
+				if (value === undefined) {
+					return reject(new Error("Not Found!"))
+				} else if (error) {
+					return reject(error)
+				}
+				value = JSON.parse(value)
+				if (expired) {
+					resolve(this.saveRequestValidation(address))
+				} else {
+					const data = {
+						address: address,
+						message: value.message,
+						requestTimeStamp: value.requestTimeStamp,
+						validationWindow: validationWindowTime
+					}
+					resolve(data)
+				}
+			})
+		})
+	}
 }
 
-
-
-/* ============================ getLevelDBData ================================|
-|  - Get data from levelDB with key                                            | 
-|  ===========================================================================*/
-function getLevelDBData(key) {
-
-  return new Promise(function(resolve, reject) {
-    db.get(key, function(err, value) {
-      if (err) {
-        var obj = {
-          error: "Error. Block doesnot exist."
-        }
-       return reject(obj); 
-      }      
-      else {
-        console.log("getLevelDBData success: ", JSON.stringify(value));
-        //return resolve(JSON.stringify(value))
-        return resolve(value) 
-      };
-    })
-  })
-}
-
-/* =========================== addDataToLevelDB ===============================|
-|  - Add data to levelDB with value                                            | 
-|  ===========================================================================*/
-function addDataToLevelDB(value) {
-
-  return new Promise(function(resolve, reject) {
-    let i = 0;
-    db.createReadStream()
-    .on('data', function(data) {
-      i++;
-    })
-    .on('error', function(err) {
-      return reject(err);            
-          })
-    .on('close', function() {
-      console.log('addDataToLevelDB (just before addLevelDBData) Block #' + i + " value # " + JSON.stringify(value));   
-      addLevelDBData(i, value).then(function(data) {        
-        return resolve(data);
-      });
-    });    
-  });
-}
-
-
-
-/* ======================== getCompleteBlocksDBData ===========================|
-|  - Get all the BlocksData                                                    | 
-|  ===========================================================================*/
-function getCompleteBlocksDBData() {
-  return new Promise(function(resolve, reject) {
-    let datArray = [];
-    
-    db.createReadStream()
-    .on("data", function(data) {
-      //console.log("data:", data)
-     datArray.push(data);
-   })
-    .on("error", function(error) {
-      return reject(error);
-    })
-    .on('close', function() {
-
-      console.log("getCompleteBlocksDBData resolved");
-      console.log("BlockChain Length", datArray.length);
-      return resolve(datArray.sort((a, b) => a.key - b.key));
-    });
-  })
-}
-
-/* ========================== ALERT: deleteAllData ============================|
-|  - Don't have this method on production. It's just for local to delete       |
-|  - and validates the blockchain                                              | 
-|  ===========================================================================*/
-function deleteAllData() {
-  getCompleteBlocksDBData().then(function(data) {
-    for(var i = 0; i < data.length; i++) {
-      db.del(i);
-    }
-  })
-}
-
-
-/* ============================== printAllData ================================|
-|  - Print all the Blocks in Blockchain                                        |
-|  ===========================================================================*/
-function printAllData() {
-  getCompleteBlocksDBData().then(function(data) {
-    for(var i = 0; i < data.length; i++) {
-      console.log("print parse: ", JSON.stringify(data[i]));
-    }
-  })
-}
-
-
-/* ============================= Module Exports ===============================|
-|  - Exports the functions                                                     |
-|  ===========================================================================*/
-module.exports = {
-  addDataToLevelDB,
-  addLevelDBData,
-  getLevelDBData,
-  getCompleteBlocksDBData
-}
+module.exports = Validation
