@@ -24,8 +24,11 @@ Criteria | Web API post endpoint validates request with JSON response.
 **Method** | POST
 **Endpoint** | ```http://localhost:8000/requestValidation```
 **Parameters** | ```address: Electrum wallet address``` 
-**Request** | ```![picture](imgages/002_electrum_test_wallet.png)```
+**Request** | ```img```
 **Response** | ```{ "address": "n2icjrQvgRoEzqMZwLV1teMtz3SQz6L7yx",     "message": "n2icjrQvgRoEzqMZwLV1teMtz3SQz6L7yx:1543166640955:starRegistry",     "requestTimeStamp": 1543166640955, "validationWindow": 300}```
+
+![picture](imgages/001_requestValidation.png)
+![picture](imgages/002_electrum_test_wallet.png)
 
 #### ii) Web API post endpoint validates message signature with JSON response. 
 
@@ -38,6 +41,10 @@ Criteria | Web API post endpoint validates message signature with JSON response
 **Request** | ```img```
 **Response** | ```{ "registerStar": true, "status": { "address": "n2icjrQvgRoEzqMZwLV1teMtz3SQz6L7yx", "message":  "n2icjrQvgRoEzqMZwLV1teMtz3SQz6L7yx:1543171862469:starRegistry", "requestTimeStamp": 1543171862469, "validationWindow": 200, "messageSignature": "valid" } }```
 
+
+![picture](imgages/003_message_sign.png)
+
+![picture](imgages/004_electrum_testnet.png)
 
 ### 2. Star registration Endpoint
 
@@ -52,6 +59,10 @@ Criteria | Web API post endpoint validates message signature with JSON response
 **Response** | ```{ "hash": "de42565618c02087e730f3bd3e2ddebd302171cdee718eaa355b606f2a89da69", "height": 1, "body": { "address": "n2icjrQvgRoEzqMZwLV1teMtz3SQz6L7yx", "star": {            "dec": "-26° 29' 24.9", "ra": "16h 29m 1.0s", "story": "466f756e642073746172207573696e672068747470733a2f2f7777772e676f6f676c652e636f6d2f736b792f","storyDecoded": "Found star using https://www.google.com/sky/" } }, "time": "1543171993", "previousBlockHash": "dd1898dea66bf19bf1c87b9f14539dadc3562c224a8ec8308329be386f9f0bd5" }```
 
 
+![picture](imgages/004_electrum_testnet.png)
+
+![picture](imgages/005_star_creation.png)
+
 ### 3. Star Lookup
 
 #### i) Get star block by hash with JSON response.
@@ -64,6 +75,7 @@ Criteria | Get star block by hash with JSON response
 **Request** | ```img```
 **Response** | ```{ "hash": "de42565618c02087e730f3bd3e2ddebd302171cdee718eaa355b606f2a89da69", "height": 1, "body": { "address": "n2icjrQvgRoEzqMZwLV1teMtz3SQz6L7yx", "star": {            "dec": "-26° 29' 24.9", "ra": "16h 29m 1.0s", "story": "466f756e642073746172207573696e672068747470733a2f2f7777772e676f6f676c652e636f6d2f736b792f","storyDecoded": "Found star using https://www.google.com/sky/" } }, "time": "1543171993", "previousBlockHash": "dd1898dea66bf19bf1c87b9f14539dadc3562c224a8ec8308329be386f9f0bd5" }```
 
+![picture](images/006_hash.png)
 
 #### ii) Get star block by wallet address (blockchain identity) with JSON response.
 Criteria | Get star block by wallet address (blockchain identity) with JSON response.
@@ -75,7 +87,7 @@ Criteria | Get star block by wallet address (blockchain identity) with JSON resp
 **Request** | ```img```
 **Response** | ```{ "hash": "de42565618c02087e730f3bd3e2ddebd302171cdee718eaa355b606f2a89da69", "height": 1, "body": { "address": "n2icjrQvgRoEzqMZwLV1teMtz3SQz6L7yx", "star": {            "dec": "-26° 29' 24.9", "ra": "16h 29m 1.0s", "story": "466f756e642073746172207573696e672068747470733a2f2f7777772e676f6f676c652e636f6d2f736b792f","storyDecoded": "Found star using https://www.google.com/sky/" } }, "time": "1543171993", "previousBlockHash": "dd1898dea66bf19bf1c87b9f14539dadc3562c224a8ec8308329be386f9f0bd5" }```
 
-
+![picture](images/007_address.png)
 
 #### iii) Get star block by star block height with JSON response.
 Criteria | Get star block by star block height with JSON response.
@@ -87,6 +99,8 @@ Criteria | Get star block by star block height with JSON response.
 **Request** | ```img```
 **Response** | ```{ "hash": "de42565618c02087e730f3bd3e2ddebd302171cdee718eaa355b606f2a89da69", "height": 1, "body": { "address": "n2icjrQvgRoEzqMZwLV1teMtz3SQz6L7yx", "star": {            "dec": "-26° 29' 24.9", "ra": "16h 29m 1.0s", "story": "466f756e642073746172207573696e672068747470733a2f2f7777772e676f6f676c652e636f6d2f736b792f","storyDecoded": "Found star using https://www.google.com/sky/" } }, "time": "1543171993", "previousBlockHash": "dd1898dea66bf19bf1c87b9f14539dadc3562c224a8ec8308329be386f9f0bd5" }```
 
+
+![picture](images/007_address.png)
 
 > **HAPPY CODING!!!** 
 
