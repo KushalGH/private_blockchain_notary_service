@@ -20,7 +20,7 @@
 
 Criteria | Web API post endpoint validates request with JSON response. 
 ------------ | -------------
-**Meets Specifications** | -----> Response should contain message details, request timestamp, and time remaining for validation window. -----> User obtains a response in JSON format with a message to sign. -----> Message format = [walletAddress]:[timeStamp]:starRegistry -----> The request must be configured with a limited validation window of five minutes. -----> When re-submitting within validation window, validation window should reduce until it expires. 
+**Meets Specifications** | - Response should contain message details, request timestamp, and time remaining for validation window. <br /> - User obtains a response in JSON format with a message to sign. <br /> - Message format = [walletAddress]:[timeStamp]:starRegistry <br /> - The request must be configured with a limited validation window of five minutes. <br /> - When re-submitting within validation window, validation window should reduce until it expires. 
 **Method** | POST
 **Endpoint** | ```http://localhost:8000/requestValidation```
 **Parameters** | ```address: Electrum wallet address``` 
