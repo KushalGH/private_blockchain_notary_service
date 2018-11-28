@@ -42,28 +42,34 @@ server.route([
         if (request.payload === null){
             return "ERROR!\n" + "Please add your wallet address to the POST request!";
         } else {
+
             const starValidation = new StarValidation(request)
             const address = request.payload.address
             if (validationWindow <= 1) {
-                requests.pop()
+                console.log("requests ", requests);
+                requests = [];
             }
             if (requests.length>0) {
-                const endTime = new Date()
+                const endTime = new Date();
+                console.log("requests ", requests);
                 validationWindow = fiveMins - Math.round((endTime - startTime)/1000)
             } else {
                 startTime = new Date()
                 validationWindow = fiveMins
                 requests.push(address)
             }
+
             try{
-                console.log("getInQueueRequests ", request.payload.address);
-                data = await starValidation.getInQueueRequests(address, validationWindow)
-                console.log("data getInQueueRequests ", data);
+                console.log("getInQueueRequests ", request.payload.address, " w: ", validationWindow);
+                data = await starValidation.getInQueueRequests(address, validationWindow);
+                console.log("data getInQueueRequests ", data, " w: ", validationWindow);
             } catch(error) {
-                console.log("saveRequestValidation ", request.payload.address);
+                console.log("saveRequestValidation ", request.payload.address, " w: ", validationWindow);
+                console.log("****call from  catch", value , " w: ", validationWindow);
                 data = await starValidation.saveRequestValidation(address, validationWindow)
-                console.log("data saveRequestValidation ", data);
+                console.log("data saveRequestValidation ", data, " w: ", validationWindow);
             }
+            console.log("data ", data);
             const response = h.response(data)
             response.code = (data.code)
             response.header('Content-Type', 'application/json; charset=utf-8')
@@ -103,6 +109,22 @@ server.route([
             return "ERROR!\n" + "Please add your wallet address and star information to the POST request!";
         } else {
             const starValidation = new StarValidation(request.payload)
+
+           try{
+                console.log("log checking validity");
+                const isValid = await starValidation.addressIsValid();
+                console.log("log isValid", isValid);
+                if (!isValid) {
+                    throw new Error("The signature isn't valid!")
+                }
+            } catch(error) {
+                h.response({
+                    status: 401, 
+                    message: error.message
+                }).code(401)
+                return
+            }
+
             console.log("log starValidation: ", starValidation);
             const body = {address, star} = request.payload
             const story = star.story
@@ -121,20 +143,7 @@ server.route([
                     throw new Error("Please enter correct information for 'dec', 'ra' and 'story' properties!")
             }   
 
-            try{
-                console.log("log checking validity");
-                const isValid = await starValidation.addressIsValid();
-                console.log("log isValid", isValid);
-                if (!isValid) {
-                    throw new Error("The signature isn't valid!")
-                }
-            } catch(error){
-                h.response({
-                    status: 401, 
-                    message: error.message
-                }).code(401)
-                return
-            }
+ 
             body.star = {
                 dec: star.dec,
                 ra: star.ra,
