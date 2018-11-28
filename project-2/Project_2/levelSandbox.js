@@ -9,33 +9,23 @@ class Validation{
 		this.req = req;
 	}
 
-	addressIsValid() {
+	addressIsValid(){
 		return new Promise((resolve, reject) => {
 			console.log("log addressIsValid ", this.req);
-			//try{ 
-				db.get(this.req.address, function(err, value) {
-					console.log("log error ", err, " value: ", value);
-      				if (err) {
-        				var obj = {
-          					error: "Error. Block doesnot exist."
-       					}
-       					return resolve(false); 
-      				}      
-      				else {
-        				console.log("getLevelDBData success: ", JSON.stringify(value));
-        				//return resolve(JSON.stringify(value))
-        				return resolve(true) 
-      				};			
-				})
-				/*.catch(error) {
-				console.log("$$ catch: ", "custom key not found");
-       			return resolve(false); 						
-				}*/
-			/*}
-			catch(error) {
-				console.log("getLevelDBData catch: ", "key not found");
-       			return resolve(false); 				
-			}*/
+			db.get(this.req.address, function(err, value) {
+				console.log("log err ", err, " value: ", value);
+      			if (err) {
+        			var obj = {
+          				error: "Error. Block doesnot exist."
+       				}
+       				return resolve(false); 
+      			}      
+      			else {
+        			console.log("getLevelDBData success: ", JSON.stringify(value));
+        			//return resolve(JSON.stringify(value))
+        			return resolve(true) 
+      			};				
+			})
 		});
 
 	}
@@ -47,7 +37,6 @@ class Validation{
 	async validateMsgSignature(address, signature){
 		return new Promise((resolve, reject) => {
 			db.get(address, (error, value) => {
-				console.log("**********value: ", value);
 				if (value === undefined) {
 					return reject(new Error("Not Found"))
 				} else if (error) {
@@ -60,11 +49,7 @@ class Validation{
 						status: value
 					})
 				} else {
-					console.log("**********requestTimeStamp: ", value.requestTimeStamp);
-					console.log("**********verificationTimeWall: ", verificationTimeWall);
-					
 					const expired = value.requestTimeStamp < (Date.now() - verificationTimeWall)
-					console.log("**********expired: ", expired);
 					let isValid = false
 					if (expired) {
 						value.validationWindow = 0
@@ -93,7 +78,6 @@ class Validation{
 	}
 
 	saveRequestValidation(address, validationWindowTime){
-
 		const timeStamp = Date.now()
 		const msg = `${address}:${timeStamp}:starRegistry`
 		const data = {
@@ -106,25 +90,17 @@ class Validation{
 		return data
 	}
 
-	async getInQueueRequests(address, validationWindowTime){
-		console.log("levelsandbox value.requestTimeStamp");
-		
+	async getInQueueRequests(address, validationWindowTime){		
 		return new Promise((resolve, reject) => {
 			db.get(address, (error, value) => {
-				value = JSON.parse(value)
-				console.log("****expired ", value.requestTimeStamp
-								 , " w: ", validationWindowTime
-								 , " now: ", Date.now());
-				const expired = value.requestTimeStamp < (Date.now() - verificationTimeWall)
 				if (value === undefined) {
 					return reject(new Error("Not Found!"))
 				} else if (error) {
 					return reject(error)
 				}
-				console.log("****levelsandbox ", value , " w: ", validationWindowTime, " expired: ", expired);
-
+				value = JSON.parse(value)
+				const expired = value.requestTimeStamp < (Date.now() - verificationTimeWall)
 				if (expired) {
-					console.log("****call from  getInQueueRequests", value , " w: ", validationWindowTime);
 					resolve(this.saveRequestValidation(address))
 				} else {
 					const data = {
