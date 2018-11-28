@@ -40,6 +40,8 @@
     - **bitcoinjs-message** npm i bitcoinjs-message
     - **bitcoinjs-lib** npm i bitcoinjs-lib
  
+# 
+
 # Private Blockchain Notary Service Use Cases
 
 ### 1. Blockchain ID validation routine
@@ -91,6 +93,8 @@ Criteria | Web API post endpoint validates message signature with JSON response
 
 ![picture](images/005_star_creation.png)
 
+![picture](images/009_invalid_input.png)
+
 ### 3. Star Lookup
 
 #### i) Get star block by hash with JSON response.
@@ -139,7 +143,4 @@ Criteria | Get star block by star block height with JSON response.
 > **LinkedIn: https://linkedin.com/in/sethkushal/**
 
 > **Twitter: https://twitter.com/KushalSeth**
-
-
-
 

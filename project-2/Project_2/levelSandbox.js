@@ -12,26 +12,28 @@ class Validation{
 	addressIsValid(){
 		return new Promise((resolve, reject) => {
 			console.log("log addressIsValid ", this.req);
-			db.get(this.req.address, function(err, value) {
-				console.log("log err ", err, " value: ", value);
-      			if (err) {
-        			var obj = {
-          				error: "Error. Block doesnot exist."
-       				}
-       				return resolve(false); 
-      			}      
-      			else {
-        			console.log("getLevelDBData success: ", JSON.stringify(value));
-        			//return resolve(JSON.stringify(value))
-        			return resolve(true) 
-      			};				
+			db.get(this.req.address).then(function(data, data2) {
+				    console.log("data ", data, " data2: ", data2)
+					return resolve(true) 
+			}).catch(function(error, error2) {
+					console.log("error ", error, " error2: ", error2)
+					return resolve(false); 
 			})
 		});
 
 	}
 
-	deleteAddress(address){
-		db.del(address)
+	deleteAddress(address) {
+		return new Promise((resolve, reject) => {
+			console.log("log addressIsValid ", this.req);
+			db.del(address).then(function(data, data2) {
+				    console.log("data ", data, " data2: ", data2)
+					return resolve(true) 
+			}).catch(function(error, error2) {
+					console.log("error ", error, " error2: ", error2)
+					return resolve(true); 
+			})
+		});		
 	}
 
 	async validateMsgSignature(address, signature){

@@ -103,6 +103,7 @@ server.route([
             return "ERROR!\n" + "Please add your wallet address and star information to the POST request!";
         } else {
             const starValidation = new StarValidation(request.payload)
+            console.log("*******************************************************************************");
             console.log("log starValidation: ", starValidation);
             const body = {address, star} = request.payload
             const story = star.story
@@ -129,11 +130,15 @@ server.route([
                     throw new Error("The signature isn't valid!")
                 }
             } catch(error){
-                h.response({
+                await starValidation.deleteAddress(address)
+                console.log("error in validating address")
+                const response = h.response({
                     status: 401, 
                     message: error.message
                 }).code(401)
-                return
+                
+                response.header('Content-Type', 'application/json; charset=utf-8');
+                return response;                
             }
             body.star = {
                 dec: star.dec,
